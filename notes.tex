@@ -62,6 +62,7 @@ Let $n_i^{B|FC}(t)$ = $B|FC$ neighbors of agent $i$ at time $t$
 
 Therefore we modify $f_i^{B|FC}(t)$ to be:
 
+% TODO: verify math syntax
 \[f_i^B(t)=\beta\frac{n_i^B(t)(1+\alpha)+g_i^B}{(n_i^B(t)(1+\alpha)+g_i^B)+(n_i^{FC}(t)(1-\alpha)+g_i^{FC})}\]
 
 \[f_i^{FC}(t)=\beta\frac{n_i^{FC}(t)(1-\alpha)+g_i^{FC}}{(n_i^B(t)(1+\alpha)+g_i^B)+(n_i^{FC}(t)(1-\alpha)+g_i^{FC})}\]
@@ -71,6 +72,7 @@ the agent's friend group somehow. We represent this as
 the following:
 
 \[ 
+  % TODO: verify math "syntax"
   v_g = 
   \begin{cases} 
       1+\omega & \text{if}\ h_i^{FC} = 1 \\
