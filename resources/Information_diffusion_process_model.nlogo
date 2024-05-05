@@ -42,6 +42,11 @@ end
 
 to setup-var
   set-default-shape turtles "person"
+
+  set fg_pop floor(number-of-agents * friend_group_pop)
+  set fc_group floor(fg_pop * fc_percentage)
+  set b_group fg_pop - fc_group
+
   set-default-shape links "curved link"
   update-output
 end
@@ -53,8 +58,17 @@ to update-output
   if Type-of-network = "ER" [output-print "Erdős–Rényi network"]
 end
 
+to agent_group_state_setter
+  ask n-of fc_group turtles [ set group_state? "FC" ]
+  ask n-of b_group turtles with [group_state? != "FC" ][ set group_state? "B" ]
+  ask turtles with [group_state? != "FC" and group_state? != "B"][ set group_state? "N" ]
+end
+
 to setup-turtles
-  if Type-of-network = "Barabási–Albert algorithm" [ nw:generate-preferential-attachment turtles links number-of-agents 3 ]
+  if Type-of-network = "Barabási–Albert algorithm" [
+    nw:generate-preferential-attachment turtles links number-of-agents 3
+    agent_group_state_setter
+  ]
   if Type-of-network = "Erdős–Rényi model" [
     if number-of-agents > 100 [
       if PC-low-performance? and ask-proceed? [
@@ -80,6 +94,9 @@ to update-colors
     if state = "B" [ set color blue ]
     if state = "F" [ set color red ]
     if state = "S" [ set color gray ]
+
+    if group_state? = "FC" [ set color yellow]
+    if group_state? = "B" [ set color violet]
   ]
 end
 
