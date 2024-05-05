@@ -1,6 +1,16 @@
 extensions [ nw ]
 
-turtles-own [ state ] ;; Three states of agents: "B" (believer) ;  "F" (factChecker) ; "S" (susceptible)
+globals[
+  fg_pop
+  fc_group
+  b_group
+]
+
+turtles-own [
+  state ;; Three states of agents: "B" (believer) ;  "F" (factChecker) ; "S" (susceptible)
+  group_state? ;; "B", "FC", "N" this means agent not part of any group
+  group_friends? ;; 0 or any integer
+]
 
 links-own [ weigth ]  ;; the weight of the links between agents
 
@@ -502,6 +512,81 @@ PC-low-performance?
 0
 1
 -1000
+
+SLIDER
+290
+459
+462
+492
+friend_group_pop
+friend_group_pop
+0
+1
+0.75
+0.05
+1
+NIL
+HORIZONTAL
+
+SLIDER
+521
+459
+693
+492
+fc_percentage
+fc_percentage
+0
+1
+0.5
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+524
+516
+696
+549
+fg_randomness
+fg_randomness
+0
+1
+0.0
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+290
+516
+462
+549
+group_count
+group_count
+0
+1
+0.5
+0.05
+1
+NIL
+HORIZONTAL
+
+SLIDER
+290
+574
+462
+607
+friend_influence
+friend_influence
+0
+1
+0.5
+0.01
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
