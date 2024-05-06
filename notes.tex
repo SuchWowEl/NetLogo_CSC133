@@ -24,7 +24,7 @@
 \maketitle
 
 \section{CONCEPT}
-SBFC Model \textbf{BUT} with the concept of "friend groups" introduced. The idea essentially is that a person's friend group could influence their "SBFC" state.
+SBFC Model \textbf{BUT} with the concept of "friend groups" introduced. The idea essentially is that a person's friend group, that leans on either believing or not in a news, could influence their "SBFC" state.
 
 \begin{figure}[h]
   \begin{subfigure}{0.57\textwidth}
@@ -36,36 +36,63 @@ SBFC Model \textbf{BUT} with the concept of "friend groups" introduced. The idea
   % \centering
 \end{figure}
 
+% TODO: Write more about this on the paper.
+Instead of devising a mechanism in creating groups, the Louvain
+community detection algorithm is used. This algorithm, as described,
+detects community or as we can call it "friend groups", which are
+described to be dense in terms of connections in-community vs out-community.
+This happens to be compatible with the Barabasi-Albert and the Erdos-Renyi
+algorithm, which the study this was based on was using to generate networks.
+
 Before we begin to assimilate the concept, we assume the following about the new concept:
 \begin{enumerate}
-  \item The state, and amount of people of friend group stay the same all throughout the simulation
+  \item The "inherent bias" of communities stay the same all throughout the simulation;
+  \item The amount of people in friend groups stays the same; and
+  \item All agents are part of a group due to the nature of their
+    Louvain community detection algorithm.
 \end{enumerate}
 
-As a result, the following parameters/variables are what I'll add:
+\begin{sloppypar}
+  As a result, the following parameters/variables are added
+with some caveats/edge cases to consider:
+\end{sloppypar}
 \begin{enumerate}
-  \item percentage of the population to be in a friend group
-  \item percentage of \textit{FC} friend groups
-  \item variance of amount of friends in a group [?]
-  \item friends' influence
+  \item percentage of friend groups to be \textit{FC}'s
+  \item percentage of community influence
 \end{enumerate}
+
+% With that being said, edge cases must be considered. For example,
+% we should check if the percentage of the population to be in a friend
+% group can allow more than one groups to form.
+%
+% If checking/restricting the input from slider is hard or impossible,
+% we can resort to \textbf{failsafes} (if the aforementioned edge case occurs,
+% allow only 1 group to form).
 
 % \pagebreak
-Let $h_i^{B|FC}$ return 1 if agent's friend group is $B|FC$ accordingly, otherwise 0.
+Let $h_i^{B|FC}$ return 1 if agent's friend group is $B|FC$ accordingly, otherwise 0. 
 
-Let $g_i$ return $i's$ \# of group friends
+Let $c_i^G(t)$ return $i's$ \# of $G$ "friend" neighbors. Let $o_i^G(t)$ return $i's$ \# of $G$ "non-friend" neighbors. Let $\omega$ = group friends' influence to be a fact-checker such that $\omega \in [0,1]$. Thus:
+% \[g_i^{B|FC} = h_i^{B|FC}g_i(1+\omega)\]
 
-Let $\omega$ = group friends' influence such that $\omega \in [0,1]$. Thus:
+% Let $n_i^{B|FC}(t)$ = $B|FC$ neighbors of agent $i$ at time $t$
+Let $n_i^{B|FC}(t)$ be the number $B|FC$ neighbors of agent $i$ at time $t$,
+multiplied by their friends' influence if applicable:
+\[ n_i^G(t)=c_i^G(t)\,m_i^G(t)+o_i^G(t) \]
+\[
+  m_i^G= 
+  \begin{cases}
+    1 + \omega & \text{if}\; h_i^G = 1 \\
+    1 - \omega & \text{if}\; h_i^G = 0 \\
+  \end{cases} \]
+where $G$ is either \textit{B} or \textit{FC}
 
-\[g_i^{B|FC} = h_i^{B|FC}g_i(1+\omega)\]
-
-Let $n_i^{B|FC}(t)$ = $B|FC$ neighbors of agent $i$ at time $t$
-
-Therefore we modify $f_i^{B|FC}(t)$ to be:
+And so the spreading transitions stay the same:
 
 % TODO: verify math syntax
-\[f_i^B(t)=\beta\frac{n_i^B(t)(1+\alpha)+g_i^B}{(n_i^B(t)(1+\alpha)+g_i^B)+(n_i^{FC}(t)(1-\alpha)+g_i^{FC})}\]
+\[f_i^B(t)=\beta\frac{n_i^B(t)(1+\alpha)}{n_i^B(t)(1+\alpha)+n_i^{FC}(t)(1-\alpha)}\]
 
-\[f_i^{FC}(t)=\beta\frac{n_i^{FC}(t)(1-\alpha)+g_i^{FC}}{(n_i^B(t)(1+\alpha)+g_i^B)+(n_i^{FC}(t)(1-\alpha)+g_i^{FC})}\]
+\[f_i^{FC}(t)=\beta\frac{n_i^{FC}(t)(1-\alpha)}{n_i^B(t)(1+\alpha)+n_i^{FC}(t)(1-\alpha)}\]
 
 \textit{Verifying} transition should be affected by the
 the agent's friend group somehow. We represent this as
@@ -73,11 +100,10 @@ the following:
 
 \[ 
   % TODO: verify math "syntax"
-  v_g = 
+  v_g(i) = 
   \begin{cases} 
       1+\omega & \text{if}\ h_i^{FC} = 1 \\
       1-\omega & \text{if}\ h_i^B = 1 \\
-      1 & \text{if}\ h_i^{FC} = h_i^B = 0 \\
   \end{cases}
 \]
 \[ p_v(i) = v_i\;v_g(i) \]

@@ -7,6 +7,7 @@ globals [
 turtles-own [
   state ;; Three states of agents: "B" (believer) ;  "F" (factChecker) ; "S" (susceptible)
   community_num?
+  community_bias?
 ]
 
 links-own [ weigth ]  ;; the weight of the links between agents
@@ -18,6 +19,7 @@ to setup
   setup-var
   setup-turtles
   update-plot
+  louvain-visualizer
   reset-ticks
 end
 
@@ -25,7 +27,18 @@ end
 
 to go
   tick
-  if ticks > 300 [stop]   ;; stop condition (300 units of time)
+  if ticks > 300 [
+    let i 1
+    foreach louvain_comm? [
+      [community] ->
+      output-print (word "Community " i ": " community
+        ", B: " count turtles with [community_num? = i and state = "B"]
+        ", F: " count turtles with [community_num? = i and state = "F"]
+      )
+      set i i + 1
+    ]
+    stop
+  ]   ;; stop condition (300 units of time)
 
   spreading               ;
   forgetting              ;-- Three main procedures for agent's behavior
@@ -94,24 +107,28 @@ end
 
 to louvain-visualizer
   ifelse all? links [color = 3][
-    let communities nw:louvain-communities
+    set louvain_comm? nw:louvain-communities
     ;let colors (list (base-colors) [57 128])
     let colors base-colors
     set colors lput 57 colors
     set colors lput 128 colors
     let i 1
-    set louvain_comm? communities
-    (foreach communities [ [community] ->
+    ;set louvain_comm? communities
+    ;let fc_comms round (fc_percentage * length louvain_comm?)
+    (foreach louvain_comm? [ [community] ->
       let col 3
       set col item (i mod length colors) colors
+      let fc_determiner random-float 1.0 <= fc_percentage
       ask community [
         set community_num? i
+        ifelse fc_determiner [set community_bias? "F"] [set community_bias? "B"]
         ask links[
           if [community_num?] of end1 = [community_num?] of end2 and [community_num?] of end1 = i[
             set color col
           ]
         ]
       ]
+      output-print (word "Community " i ": " community ", B: " count turtles with [community_num? = i and state = "B"])
 
       set i i + 1
     ])
@@ -122,13 +139,35 @@ end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  GO PROCEDURES ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+to-report agent_group_is [G]
+  ifelse community_bias? = G [report 1][report 0]
+end
+
 to spreading  ;; each agent modifies with some probability its state considering the points of view (states) of its neighbors;
   ; S -> B and S -> F according to:
   ; S -> B : "spreading" function for the hoax (fi)
   ; S -> F : disseminate among the immediate neighborhood of a vertex (gi)
   ask turtles with [state = "S"][
-    let nB count link-neighbors with [state = "B"] ; n-of neighbors Believers
-    let nF count link-neighbors with [state = "F"] ; n-of neighbors Fact-checkers
+    let my_comm_num community_num?
+
+    let nB 0
+    ifelse agent_group_is "B" = 0[
+      set nB (count link-neighbors with [state = "B" and community_num? = my_comm_num] * (1 - friend_influence))
+    ][
+      set nB (count link-neighbors with [state = "B" and community_num? = my_comm_num] * (1 + friend_influence))
+    ]
+    set nB nB + (count link-neighbors with [state = "B" and community_num? != my_comm_num] )
+    let nF 0
+    ifelse agent_group_is "F" = 0[
+      set nF (count link-neighbors with [state = "F" and community_num? = my_comm_num] * (1 - friend_influence))
+    ][
+      set nF (count link-neighbors with [state = "F" and community_num? = my_comm_num] * (1 + friend_influence))
+    ]
+      set nF nF + (count link-neighbors with [state = "F" and community_num? != my_comm_num] )
+
+    ;let nB count link-neighbors with [state = "B"] ; n-of neighbors Believers
+    ;let nF count link-neighbors with [state = "F"] ; n-of neighbors Fact-checkers
+
     let _1PlusA ( 1 + alpha-hoaxCredibility)
     let _1MinusA ( 1 - alpha-hoaxCredibility)
     let den (nB * _1PlusA + nF * _1MinusA)
@@ -299,7 +338,7 @@ number-of-agents
 number-of-agents
 10
 1000
-747.0
+816.0
 1
 1
 NIL
@@ -541,10 +580,10 @@ PC-low-performance?
 -1000
 
 BUTTON
-161
-424
-275
-457
+11
+631
+125
+664
 show louvain
 louvain-visualizer
 NIL
@@ -556,6 +595,36 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+8
+429
+180
+462
+fc_percentage
+fc_percentage
+0
+1
+0.3
+0.05
+1
+NIL
+HORIZONTAL
+
+SLIDER
+24
+490
+196
+523
+friend_influence
+friend_influence
+0
+1
+0.85
+0.05
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
