@@ -1,15 +1,12 @@
 extensions [ nw ]
 
-globals[
-  fg_pop
-  fc_group
-  b_group
+globals [
+  comm_count?
 ]
 
 turtles-own [
   state ;; Three states of agents: "B" (believer) ;  "F" (factChecker) ; "S" (susceptible)
-  group_state? ;; "B", "FC", "N" this means agent not part of any group
-  group_friends? ;; 0 or any integer
+  community_num?
 ]
 
 links-own [ weigth ]  ;; the weight of the links between agents
@@ -42,11 +39,6 @@ end
 
 to setup-var
   set-default-shape turtles "person"
-
-  set fg_pop floor(number-of-agents * friend_group_pop)
-  set fc_group floor(fg_pop * fc_percentage)
-  set b_group fg_pop - fc_group
-
   set-default-shape links "curved link"
   update-output
 end
@@ -58,61 +50,9 @@ to update-output
   if Type-of-network = "ER" [output-print "Erdős–Rényi network"]
 end
 
-; to-report divide-population [population num-groups vary-var-percentage]
-;   ; Calculate target population size for each group
-;   let target-population-size population / num-groups
-;
-;   ; Calculate allowed vary-var in population size
-;   let vary-var vary-var-percentage / 100 * target-population-size
-;
-;   ; Initialize list to store populations for each group
-;   let group-populations []
-;
-;   ; Initialize variables to keep track of population distribution
-;   let remaining-population population
-;   let remaining-groups num-groups
-;
-;   ; Loop through each group
-;   repeat num-groups [
-;     ; Calculate maximum and minimum allowed population size for this group
-;     let max-population-size target-population-size + vary-var
-;     let min-population-size target-population-size - vary-var
-;
-;     ; If it's the last group, assign remaining population to it
-;     if remaining-groups = 1 [
-;       set group-populations lput remaining-population group-populations
-;       stop
-;     ]
-;
-;     ; Generate a random population size within the allowed range
-;     let population-for-this-group random-float (max-population-size - min-population-size) + min-population-size
-;
-;     ; Ensure the generated population size does not exceed remaining population
-;     set population-for-this-group min list population-for-this-group remaining-population
-;
-;     ; Update remaining population and groups
-;     set remaining-population remaining-population - population-for-this-group
-;     set remaining-groups remaining-groups - 1
-;
-;     ; Add the generated population size to the list
-;     set group-populations lput population-for-this-group group-populations
-;   ]
-;
-;   ; Return the list of populations for each group
-;   report group-populations
-; end
-;
-;
-to agent_group_state_setter
-  ask n-of fc_group turtles [ set group_state? "FC" ]
-  ask n-of b_group turtles with [group_state? != "FC" ][ set group_state? "B" ]
-  ask turtles with [group_state? != "FC" and group_state? != "B"][ set group_state? "N" ]
-end
-
 to setup-turtles
   if Type-of-network = "Barabási–Albert algorithm" [
     nw:generate-preferential-attachment turtles links number-of-agents 3
-    agent_group_state_setter
   ]
   if Type-of-network = "Erdős–Rényi model" [
     if number-of-agents > 100 [
@@ -122,33 +62,6 @@ to setup-turtles
       ]
     ]
   ]
-;
-;  let num-groups (group_count * floor(fc_group / 3))
-;
-;    ; Call divide-population function to get populations for each group
-;  let group-populations divide-population fg_pop num-groups fg_randomness
-;
-;  ; Initialize variables to keep track of the starting index for each group
-;  let start-index 0
-;
-;  ; Loop through each group
-;  foreach group-populations [
-;    population-for-group ->
-;    ; Create links between turtles in this group
-;    ask n-of 1 turtles with [group_state? = "FC" and group_friends? = 0][
-;
-;    ]
-;
-;
-;    create-links-with other turtles with (population-for-group / 2) [
-;      ; Color the link based on the group
-;      set color group-color
-;    ]
-;
-;    ; Update the starting index for the next group
-;    set start-index start-index + population-for-group
-;  ]
-;
  init-edges
 end
 
@@ -163,12 +76,9 @@ end
 
 to update-colors
   ask turtles [
-    ;if state = "B" [ set color blue ]
-    ;if state = "F" [ set color red ]
-    ;if state = "S" [ set color gray ]
-
-    ;if group_state? = "FC" [ set color yellow]
-    ;if group_state? = "B" [ set color violet]
+    if state = "B" [ set color blue ]
+    if state = "F" [ set color red ]
+    if state = "S" [ set color gray ]
   ]
 end
 
@@ -183,8 +93,22 @@ to update-plot
 
   let communities nw:louvain-communities
   let colors sublist base-colors 0 (length communities)
+  let i 1
   (foreach communities colors [ [community col] ->
-    ask community [ set color col ]
+    ;ask community [ set color col ]
+    ask community [
+      set community_num? i
+    ]
+    ask community [
+      ask links[
+        if [community_num?] of end1 = [community_num?] of end2 and [community_num?] of end1 = i[
+          set color col
+        ]
+      ]
+    ]
+
+    set i i + 1
+    set comm_count? i
   ])
 end
 
@@ -607,81 +531,6 @@ PC-low-performance?
 0
 1
 -1000
-
-SLIDER
-290
-459
-462
-492
-friend_group_pop
-friend_group_pop
-0
-1
-0.5
-0.05
-1
-NIL
-HORIZONTAL
-
-SLIDER
-521
-459
-693
-492
-fc_percentage
-fc_percentage
-0
-1
-0.5
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-524
-516
-696
-549
-fg_randomness
-fg_randomness
-0
-1
-0.0
-0.01
-1
-NIL
-HORIZONTAL
-
-SLIDER
-290
-516
-462
-549
-group_count
-group_count
-0
-1
-0.5
-0.05
-1
-NIL
-HORIZONTAL
-
-SLIDER
-290
-574
-462
-607
-friend_influence
-friend_influence
-0
-1
-0.5
-0.01
-1
-NIL
-HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
