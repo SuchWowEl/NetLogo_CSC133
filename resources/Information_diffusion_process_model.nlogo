@@ -1,7 +1,7 @@
 extensions [ nw ]
 
 globals [
-  comm_count?
+  louvain_comm?
 ]
 
 turtles-own [
@@ -90,26 +90,34 @@ to update-plot
   plot count turtles with [state = "F"]
   set-current-plot-pen "SUSCEPTIBLES"
   plot count turtles with [state = "S"]
+end
 
-  let communities nw:louvain-communities
-  let colors sublist base-colors 0 (length communities)
-  let i 1
-  (foreach communities colors [ [community col] ->
-    ;ask community [ set color col ]
-    ask community [
-      set community_num? i
-    ]
-    ask community [
-      ask links[
-        if [community_num?] of end1 = [community_num?] of end2 and [community_num?] of end1 = i[
-          set color col
+to louvain-visualizer
+  ifelse all? links [color = 3][
+    let communities nw:louvain-communities
+    ;let colors (list (base-colors) [57 128])
+    let colors base-colors
+    set colors lput 57 colors
+    set colors lput 128 colors
+    let i 1
+    set louvain_comm? communities
+    (foreach communities [ [community] ->
+      let col 3
+      set col item (i mod length colors) colors
+      ask community [
+        set community_num? i
+        ask links[
+          if [community_num?] of end1 = [community_num?] of end2 and [community_num?] of end1 = i[
+            set color col
+          ]
         ]
       ]
-    ]
 
-    set i i + 1
-    set comm_count? i
-  ])
+      set i i + 1
+    ])
+  ][
+    ask links [set color 3]
+  ]
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  GO PROCEDURES ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -164,11 +172,11 @@ end
 GRAPHICS-WINDOW
 290
 10
-727
-448
+1011
+732
 -1
 -1
-13.0
+21.61
 1
 10
 1
@@ -291,16 +299,16 @@ number-of-agents
 number-of-agents
 10
 1000
-50.0
+747.0
 1
 1
 NIL
 HORIZONTAL
 
 PLOT
-730
+1020
 278
-1158
+1448
 526
 State-of-people
 NIL
@@ -318,9 +326,9 @@ PENS
 "FACT-CHECKERS" 1.0 0 -2674135 true "" ""
 
 MONITOR
-1066
+1356
 372
-1141
+1431
 417
 Believers
 count turtles with [state = \"B\"]
@@ -329,9 +337,9 @@ count turtles with [state = \"B\"]
 11
 
 MONITOR
-1066
+1356
 419
-1141
+1431
 464
 Susceptibles
 count turtles with [state = \"S\"]
@@ -340,9 +348,9 @@ count turtles with [state = \"S\"]
 11
 
 MONITOR
-1066
+1356
 466
-1141
+1431
 511
 Fact-checker
 count turtles with [state = \"F\"]
@@ -351,9 +359,9 @@ count turtles with [state = \"F\"]
 11
 
 MONITOR
-835
+1125
 546
-905
+1195
 591
 # Vertices
 count turtles
@@ -379,9 +387,9 @@ NIL
 1
 
 MONITOR
-906
+1196
 546
-977
+1267
 591
 # Edges
 count links
@@ -390,9 +398,9 @@ count links
 11
 
 BUTTON
-835
+1125
 611
-915
+1205
 644
 Spring layout
 repeat 50 [ layout-spring turtles links 0.2 5 1 ]
@@ -447,9 +455,9 @@ Graph
 1
 
 TEXTBOX
-740
+1030
 619
-831
+1121
 637
 Improve layout:
 12
@@ -457,9 +465,9 @@ Improve layout:
 1
 
 TEXTBOX
-739
+1029
 558
-837
+1127
 576
 Graph metrics:
 13
@@ -467,9 +475,9 @@ Graph metrics:
 1
 
 BUTTON
-917
+1207
 611
-986
+1276
 644
 Expansion
 ask turtles [fd 1]
@@ -484,9 +492,9 @@ NIL
 1
 
 MONITOR
-978
+1268
 546
-1058
+1348
 591
 Avg. Degree
 sum([count link-neighbors] of turtles) / count turtles
@@ -495,16 +503,16 @@ sum([count link-neighbors] of turtles) / count turtles
 11
 
 OUTPUT
-730
+1020
 10
-1158
+1448
 267
 11
 
 TEXTBOX
-1069
+1359
 355
-1123
+1413
 375
 #Agents:
 13
@@ -531,6 +539,23 @@ PC-low-performance?
 0
 1
 -1000
+
+BUTTON
+161
+424
+275
+457
+show louvain
+louvain-visualizer
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
