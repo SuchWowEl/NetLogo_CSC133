@@ -58,6 +58,51 @@ to update-output
   if Type-of-network = "ER" [output-print "Erdős–Rényi network"]
 end
 
+; to-report divide-population [population num-groups vary-var-percentage]
+;   ; Calculate target population size for each group
+;   let target-population-size population / num-groups
+;
+;   ; Calculate allowed vary-var in population size
+;   let vary-var vary-var-percentage / 100 * target-population-size
+;
+;   ; Initialize list to store populations for each group
+;   let group-populations []
+;
+;   ; Initialize variables to keep track of population distribution
+;   let remaining-population population
+;   let remaining-groups num-groups
+;
+;   ; Loop through each group
+;   repeat num-groups [
+;     ; Calculate maximum and minimum allowed population size for this group
+;     let max-population-size target-population-size + vary-var
+;     let min-population-size target-population-size - vary-var
+;
+;     ; If it's the last group, assign remaining population to it
+;     if remaining-groups = 1 [
+;       set group-populations lput remaining-population group-populations
+;       stop
+;     ]
+;
+;     ; Generate a random population size within the allowed range
+;     let population-for-this-group random-float (max-population-size - min-population-size) + min-population-size
+;
+;     ; Ensure the generated population size does not exceed remaining population
+;     set population-for-this-group min list population-for-this-group remaining-population
+;
+;     ; Update remaining population and groups
+;     set remaining-population remaining-population - population-for-this-group
+;     set remaining-groups remaining-groups - 1
+;
+;     ; Add the generated population size to the list
+;     set group-populations lput population-for-this-group group-populations
+;   ]
+;
+;   ; Return the list of populations for each group
+;   report group-populations
+; end
+;
+;
 to agent_group_state_setter
   ask n-of fc_group turtles [ set group_state? "FC" ]
   ask n-of b_group turtles with [group_state? != "FC" ][ set group_state? "B" ]
@@ -77,6 +122,33 @@ to setup-turtles
       ]
     ]
   ]
+;
+;  let num-groups (group_count * floor(fc_group / 3))
+;
+;    ; Call divide-population function to get populations for each group
+;  let group-populations divide-population fg_pop num-groups fg_randomness
+;
+;  ; Initialize variables to keep track of the starting index for each group
+;  let start-index 0
+;
+;  ; Loop through each group
+;  foreach group-populations [
+;    population-for-group ->
+;    ; Create links between turtles in this group
+;    ask n-of 1 turtles with [group_state? = "FC" and group_friends? = 0][
+;
+;    ]
+;
+;
+;    create-links-with other turtles with (population-for-group / 2) [
+;      ; Color the link based on the group
+;      set color group-color
+;    ]
+;
+;    ; Update the starting index for the next group
+;    set start-index start-index + population-for-group
+;  ]
+;
  init-edges
 end
 
@@ -91,12 +163,12 @@ end
 
 to update-colors
   ask turtles [
-    if state = "B" [ set color blue ]
-    if state = "F" [ set color red ]
-    if state = "S" [ set color gray ]
+    ;if state = "B" [ set color blue ]
+    ;if state = "F" [ set color red ]
+    ;if state = "S" [ set color gray ]
 
-    if group_state? = "FC" [ set color yellow]
-    if group_state? = "B" [ set color violet]
+    ;if group_state? = "FC" [ set color yellow]
+    ;if group_state? = "B" [ set color violet]
   ]
 end
 
@@ -108,6 +180,12 @@ to update-plot
   plot count turtles with [state = "F"]
   set-current-plot-pen "SUSCEPTIBLES"
   plot count turtles with [state = "S"]
+
+  let communities nw:louvain-communities
+  let colors sublist base-colors 0 (length communities)
+  (foreach communities colors [ [community col] ->
+    ask community [ set color col ]
+  ])
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  GO PROCEDURES ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -289,7 +367,7 @@ number-of-agents
 number-of-agents
 10
 1000
-1000.0
+50.0
 1
 1
 NIL
@@ -297,9 +375,9 @@ HORIZONTAL
 
 PLOT
 730
-72
+278
 1158
-320
+526
 State-of-people
 NIL
 NIL
@@ -317,9 +395,9 @@ PENS
 
 MONITOR
 1066
-166
+372
 1141
-211
+417
 Believers
 count turtles with [state = \"B\"]
 0
@@ -328,9 +406,9 @@ count turtles with [state = \"B\"]
 
 MONITOR
 1066
-213
+419
 1141
-258
+464
 Susceptibles
 count turtles with [state = \"S\"]
 0
@@ -339,9 +417,9 @@ count turtles with [state = \"S\"]
 
 MONITOR
 1066
-260
+466
 1141
-305
+511
 Fact-checker
 count turtles with [state = \"F\"]
 0
@@ -350,9 +428,9 @@ count turtles with [state = \"F\"]
 
 MONITOR
 835
-340
+546
 905
-385
+591
 # Vertices
 count turtles
 17
@@ -378,9 +456,9 @@ NIL
 
 MONITOR
 906
-340
+546
 977
-385
+591
 # Edges
 count links
 1
@@ -389,9 +467,9 @@ count links
 
 BUTTON
 835
-405
+611
 915
-438
+644
 Spring layout
 repeat 50 [ layout-spring turtles links 0.2 5 1 ]
 NIL
@@ -446,9 +524,9 @@ Graph
 
 TEXTBOX
 740
-413
+619
 831
-431
+637
 Improve layout:
 12
 0.0
@@ -456,9 +534,9 @@ Improve layout:
 
 TEXTBOX
 739
-352
+558
 837
-370
+576
 Graph metrics:
 13
 0.0
@@ -466,9 +544,9 @@ Graph metrics:
 
 BUTTON
 917
-405
+611
 986
-438
+644
 Expansion
 ask turtles [fd 1]
 NIL
@@ -483,9 +561,9 @@ NIL
 
 MONITOR
 978
-340
+546
 1058
-385
+591
 Avg. Degree
 sum([count link-neighbors] of turtles) / count turtles
 3
@@ -496,14 +574,14 @@ OUTPUT
 730
 10
 1158
-70
+267
 11
 
 TEXTBOX
 1069
-149
+355
 1123
-169
+375
 #Agents:
 13
 0.0
@@ -539,7 +617,7 @@ friend_group_pop
 friend_group_pop
 0
 1
-0.75
+0.5
 0.05
 1
 NIL
