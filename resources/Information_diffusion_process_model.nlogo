@@ -2,12 +2,14 @@ extensions [ nw ]
 
 globals [
   louvain_comm?
+  init_b
+  fc_percentage_run
 ]
 
 turtles-own [
   state ;; Three states of agents: "B" (believer) ;  "F" (factChecker) ; "S" (susceptible)
   community_num?
-  community_bias?
+  community_bias
 ]
 
 links-own [ weigth ]  ;; the weight of the links between agents
@@ -18,8 +20,11 @@ to setup
   ca
   setup-var
   setup-turtles
+  set init_b [who] of turtles with [state = "B"]
   update-plot
+  set fc_percentage_run 200
   louvain-visualizer
+  set fc_percentage_run fc_percentage
   reset-ticks
 end
 
@@ -29,11 +34,12 @@ to go
   tick
   if ticks > 300 [
     let i 1
+    output-print ";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;"
     foreach louvain_comm? [
       [community] ->
       output-print (word "Community " i ": " community
-        ", B: " count turtles with [community_num? = i and state = "B"]
-        ", F: " count turtles with [community_num? = i and state = "F"]
+        ", B: " count turtles with [community_num? = i - 1 and state = "B"]
+        ", F: " count turtles with [community_num? = i - 1 and state = "F"]
       )
       set i i + 1
     ]
@@ -95,6 +101,19 @@ to update-colors
   ]
 end
 
+to reset-states
+  ask turtles [set state "S"]
+  foreach init_b[
+    [turtle_num] ->
+    ask turtle turtle_num [set state "B"]
+  ]
+  update-colors
+  update-plot
+  louvain-visualizer
+  set fc_percentage_run fc_percentage
+  reset-ticks
+end
+
 to update-plot
   set-current-plot "State-of-people"
   set-current-plot-pen "BELIEVERS"
@@ -106,7 +125,10 @@ to update-plot
 end
 
 to louvain-visualizer
-  ifelse all? links [color = 3][
+  if fc_percentage_run != fc_percentage [
+    ask links[
+      if color != 3 [set color 3]
+    ]
     set louvain_comm? nw:louvain-communities
     ;let colors (list (base-colors) [57 128])
     let colors base-colors
@@ -116,31 +138,30 @@ to louvain-visualizer
     ;set louvain_comm? communities
     ;let fc_comms round (fc_percentage * length louvain_comm?)
     (foreach louvain_comm? [ [community] ->
+      let temp_bias ""
       let col 3
       set col item (i mod length colors) colors
       let fc_determiner random-float 1.0 <= fc_percentage
       ask community [
         set community_num? i
-        ifelse fc_determiner [set community_bias? "F"] [set community_bias? "B"]
+        ifelse fc_determiner [set community_bias "F" set temp_bias "F"] [set community_bias "B" set temp_bias "B"]
         ask links[
           if [community_num?] of end1 = [community_num?] of end2 and [community_num?] of end1 = i[
             set color col
           ]
         ]
       ]
-      output-print (word "Community " i ": " community ", B: " count turtles with [community_num? = i and state = "B"])
+      output-print (word temp_bias " Community " i ": " community ", B: " count turtles with [community_num? = i and state = "B"])
 
       set i i + 1
     ])
-  ][
-    ask links [set color 3]
   ]
 end
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  GO PROCEDURES ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 to-report agent_group_is [G]
-  ifelse community_bias? = G [report 1][report 0]
+  ifelse community_bias = G [report 1][report 0]
 end
 
 to spreading  ;; each agent modifies with some probability its state considering the points of view (states) of its neighbors;
@@ -151,14 +172,14 @@ to spreading  ;; each agent modifies with some probability its state considering
     let my_comm_num community_num?
 
     let nB 0
-    ifelse agent_group_is "B" = 0[
+    ifelse agent_group_is "B" = 0[; agent group is not "B"
       set nB (count link-neighbors with [state = "B" and community_num? = my_comm_num] * (1 - friend_influence))
     ][
       set nB (count link-neighbors with [state = "B" and community_num? = my_comm_num] * (1 + friend_influence))
     ]
     set nB nB + (count link-neighbors with [state = "B" and community_num? != my_comm_num] )
     let nF 0
-    ifelse agent_group_is "F" = 0[
+    ifelse agent_group_is "F" = 0[; agent group is not "F"
       set nF (count link-neighbors with [state = "F" and community_num? = my_comm_num] * (1 - friend_influence))
     ][
       set nF (count link-neighbors with [state = "F" and community_num? = my_comm_num] * (1 + friend_influence))
@@ -196,7 +217,9 @@ end
 
 to veryfing  ;; B-> F ; each agent can fact-check the hoax with a fixed probability pverify;
   ask turtles with [state = "B"][
-    if random-float 1 < pVerify [
+    let vg 0
+    ifelse community_bias = "B" [set vg 1 - friend_influence][set vg 1 + friend_influence]
+    if random-float 1 < (pVerify * vg) [
       set state "F"
     ]
   ]
@@ -253,12 +276,12 @@ NIL
 1
 
 BUTTON
-185
-362
-240
-395
-go-once
-go
+173
+364
+281
+397
+reset states
+reset-states
 NIL
 1
 T
@@ -338,17 +361,17 @@ number-of-agents
 number-of-agents
 10
 1000
-816.0
+568.0
 1
 1
 NIL
 HORIZONTAL
 
 PLOT
-1020
-278
-1448
-526
+1021
+14
+1849
+439
 State-of-people
 NIL
 NIL
@@ -365,10 +388,10 @@ PENS
 "FACT-CHECKERS" 1.0 0 -2674135 true "" ""
 
 MONITOR
-1356
-372
-1431
-417
+1763
+166
+1838
+211
 Believers
 count turtles with [state = \"B\"]
 0
@@ -376,10 +399,10 @@ count turtles with [state = \"B\"]
 11
 
 MONITOR
-1356
-419
-1431
-464
+1763
+213
+1838
+258
 Susceptibles
 count turtles with [state = \"S\"]
 0
@@ -387,10 +410,10 @@ count turtles with [state = \"S\"]
 11
 
 MONITOR
-1356
-466
-1431
-511
+1763
+260
+1838
+305
 Fact-checker
 count turtles with [state = \"F\"]
 0
@@ -409,9 +432,9 @@ count turtles
 11
 
 BUTTON
-185
+189
 298
-258
+262
 360
 GO
 go
@@ -542,17 +565,17 @@ sum([count link-neighbors] of turtles) / count turtles
 11
 
 OUTPUT
-1020
-10
-1448
-267
+1360
+442
+1848
+741
 11
 
 TEXTBOX
-1359
-355
-1413
-375
+1766
+149
+1820
+169
 #Agents:
 13
 0.0
@@ -579,23 +602,6 @@ PC-low-performance?
 1
 -1000
 
-BUTTON
-11
-631
-125
-664
-show louvain
-louvain-visualizer
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SLIDER
 8
 429
@@ -605,22 +611,22 @@ fc_percentage
 fc_percentage
 0
 1
-0.3
+0.75
 0.05
 1
 NIL
 HORIZONTAL
 
 SLIDER
-24
-490
-196
-523
+7
+475
+179
+508
 friend_influence
 friend_influence
 0
 1
-0.85
+0.75
 0.05
 1
 NIL

@@ -78,39 +78,68 @@ Let $c_i^G(t)$ return $i's$ \# of $G$ "friend" neighbors. Let $o_i^G(t)$ return 
 % Let $n_i^{B|FC}(t)$ = $B|FC$ neighbors of agent $i$ at time $t$
 Let $n_i^{B|FC}(t)$ be the number $B|FC$ neighbors of agent $i$ at time $t$,
 multiplied by their friends' influence if applicable:
-\[ n_i^G(t)=c_i^G(t)\,m_i^G(t)+o_i^G(t) \]
-\[
+\begin{equation} n_i^G(t)=m_i^G\,c_i^G(t)+o_i^G(t) \end{equation}
+\begin{equation}
   m_i^G= 
   \begin{cases}
     1 + \omega & \text{if}\; h_i^G = 1 \\
-    1 - \omega & \text{if}\; h_i^G = 0 \\
-  \end{cases} \]
+    1 & \text{if}\; h_i^G = 0 \\
+  \end{cases} \end{equation}
 where $G$ is either \textit{B} or \textit{FC}
+
+\begin{equation}
+  p_i(t+1) = (p_i^S(t+1),p_i^B(t+1),p_i^{FC}(t+1))
+\end{equation}
+\begin{equation}
+  p_i^S(t+1) = [1-f_i^B(t)-f_i^{FC}(t)]s_i(t)+p_f[s_i^B(t)+s_i^{FC}(t)]
+\end{equation}
+\begin{equation}
+  p_i^B(t+1) = f_i^B(t)s_i^S(t) + (1-p_f)(1-p_v)s_i^B(t)
+\end{equation}
+\begin{equation}
+  p_i^{FC}(t+1) = f_i^{FC}(t)s_i^S(t) + p_vs_i^B(t)+(1-p_f)s_i^{FC}(t)
+\end{equation}
+
+\begin{equation}
+  s_i^{\{S,B,FC\}}(t)=\delta(s_i(t), \{S,B,FC\})
+\end{equation}
 
 And so the spreading transitions stay the same:
 
 % TODO: verify math syntax
-\[f_i^B(t)=\beta\frac{n_i^B(t)(1+\alpha)}{n_i^B(t)(1+\alpha)+n_i^{FC}(t)(1-\alpha)}\]
+\begin{equation}f_i^B(t)=\beta\frac{n_i^B(t)(1+\alpha)}{n_i^B(t)(1+\alpha)+n_i^{FC}(t)(1-\alpha)}\end{equation}
 
-\[f_i^{FC}(t)=\beta\frac{n_i^{FC}(t)(1-\alpha)}{n_i^B(t)(1+\alpha)+n_i^{FC}(t)(1-\alpha)}\]
+\begin{equation}f_i^{FC}(t)=\beta\frac{n_i^{FC}(t)(1-\alpha)}{n_i^B(t)(1+\alpha)+n_i^{FC}(t)(1-\alpha)}\end{equation}
 
 \textit{Verifying} transition should be affected by the
 the agent's friend group somehow. We represent this as
 the following:
 
-\[ 
+\begin{equation} 
   % TODO: verify math "syntax"
-  v_g(i) = 
+  v_i = 
   \begin{cases} 
       1+\omega & \text{if}\ h_i^{FC} = 1 \\
       1-\omega & \text{if}\ h_i^B = 1 \\
   \end{cases}
-\]
-\[ p_v(i) = v_i\;v_g(i) \]
+\end{equation}
+\begin{equation} p_i = v_i\;v_g \end{equation}
 
 where $v_i$ is the old $p_v$ or the verifying probability
 
 As for \textit{forgetting} transitions, I left it as it is.
+
+\section{RESULTS}
+Barabasi-Albert ($\alpha$ = 0.30): All in all, as $F_c$ increases, the less the "increase" of the believer group's population as $F_i$ increases is.
+
+Barabasi-Albert ($\alpha$ = 0.80): As $F_c$ goes up, the less the "increase" of the believer group's population as $F_i$ increases is.
+When $F_c = 0.75$,  the fact-checkers were able to outnumber the believer groups.
+
+Erdos-Renyi ($\alpha$ = 0.30): All in all, as $F_c$ increases, the less the "increase" of the believer group's population as $F_i$ increases is.
+
+Erdos-Renyi ($\alpha$ = 0.80): As $F_c$ goes up, the less the "increase" of the believer group's population as $F_i$ increases is
+When $F_c = 0.75$,  the fact-checkers were able to outnumber the believer groups.
+
 % \begin{multicols*}{2}
 %
 % \section{FIRST SECTION}
